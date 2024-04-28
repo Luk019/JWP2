@@ -57,7 +57,11 @@ def delete_student(student_id):
         return "Student not found"
 
 # Przykładowe użycie funkcji
+add_student("Marek", "Traba", 3.5)
+print(get_student(4))
+update_student(3,"Alicja","Dab")
 print(get_student(3))
+delete_student(4)
 
 # Zamknięcie sesji
 session.close()

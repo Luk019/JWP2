@@ -17,7 +17,7 @@ Base.metadata.create_all(engine)
 
 Session = sessionmaker(bind=engine)
 session = Session()
-"""
+
 # Dodawanie przykładowych danych
 students_data = [
     {'name': 'Andrzej Kowalski ', 'age': 20, 'grade': 4.5},
@@ -30,7 +30,7 @@ for student_data in students_data:
     session.add(new_student)
 
 session.commit()
-"""
+
 # Wyświetlanie dodanych danych
 students = session.query(Student).all()
 for student in students:
