@@ -8,20 +8,16 @@
 </head>
 <body>
     <h1>TODO List</h1>
-    <form action="/add" method="post">
-        <input type="text" name="content" placeholder="New task">
+    <form>
+        <input type="text" name="content" placeholder="New task" required>
         <button type="submit">Add</button>
     </form>
     <ul id="task-list">
         {% for task in tasks %}
             <li>
-                <form action="/update/{{ task[0] }}" method="post" class="inline-form">
-                    <input type="text" name="content" value="{{ task[1] }}">
-                    <button type="submit">Edit</button>
-                </form>
-                <form action="/delete/{{ task[0] }}" method="post" class="inline-form">
-                    <button type="submit">Delete</button>
-                </form>
+                <input type="text" class="task-content" value="{{ task[1] }}">
+                <button class="edit-btn" data-id="{{ task[0] }}">Edit</button>
+                <button class="delete-btn" data-id="{{ task[0] }}">Delete</button>
             </li>
         {% endfor %}
     </ul>

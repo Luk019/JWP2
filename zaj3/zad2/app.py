@@ -29,8 +29,9 @@ def add_task():
     with sqlite3.connect('todo.db') as conn:
         c = conn.cursor()
         c.execute("INSERT INTO tasks (content) VALUES (?)", (task_content,))
+        task_id = c.lastrowid
         conn.commit()
-    return redirect(url_for('index'))
+    return jsonify({'id': task_id, 'content': task_content})
 
 @app.route('/delete/<int:task_id>', methods=['POST'])
 def delete_task(task_id):
@@ -38,16 +39,16 @@ def delete_task(task_id):
         c = conn.cursor()
         c.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
         conn.commit()
-    return redirect(url_for('index'))
+    return '', 204
 
 @app.route('/update/<int:task_id>', methods=['POST'])
 def update_task(task_id):
-    task_content = request.form['content']
+    task_content = request.json['content']
     with sqlite3.connect('todo.db') as conn:
         c = conn.cursor()
         c.execute("UPDATE tasks SET content = ? WHERE id = ?", (task_content, task_id))
         conn.commit()
-    return redirect(url_for('index'))
+    return '', 204
 
 if __name__ == '__main__':
     app.run(debug=True)
