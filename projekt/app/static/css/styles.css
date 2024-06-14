@@ -32,5 +32,11 @@ form textarea {
 }
 
 .selected {
-    color: gray;
+    color: orange;
+}
+
+button {
+    border: none;
+    background: none;
+    cursor: pointer;
 }

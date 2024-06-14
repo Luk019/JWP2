@@ -104,11 +104,14 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
+            if user.is_blocked:
+                flash('Your account is blocked. Contact the admin.')
+                return redirect(url_for('auth.login'))
             login_user(user)
             return redirect(url_for('main.index'))
-        else:
-            flash('Invalid email or password')
+        flash('Invalid email or password')
     return render_template('login.html')
+
 
 
 @auth.route('/logout')
@@ -122,7 +125,7 @@ def logout():
 @login_required
 def edit_post(post_id):
     post = Post.query.get_or_404(post_id)
-    if post.user_id != current_user.id:
+    if post.user_id != current_user.id and not current_user.is_admin:
         flash('You are not authorized to edit this post.')
         return redirect(url_for('main.index'))
     if request.method == 'POST':
@@ -134,15 +137,13 @@ def edit_post(post_id):
     return render_template('edit_post.html', post=post)
 
 
-# Widok usunięcia postu
 @main.route('/delete_post/<int:post_id>', methods=['POST'])
 @login_required
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
-    if post.user_id != current_user.id:
+    if post.user_id != current_user.id and not current_user.is_admin:
         flash('You are not authorized to delete this post.')
         return redirect(url_for('main.index'))
-    # Usuwanie wszystkich komentarzy i łapek związanych z postem
     for comment in post.comments:
         for like in comment.likes:
             db.session.delete(like)
@@ -160,7 +161,7 @@ def delete_post(post_id):
 @login_required
 def edit_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
-    if comment.user_id != current_user.id:
+    if comment.user_id != current_user.id and not current_user.is_admin:
         flash('You are not authorized to edit this comment.')
         return redirect(url_for('main.post', post_id=comment.post_id))
     if request.method == 'POST':
@@ -171,15 +172,110 @@ def edit_comment(comment_id):
     return render_template('edit_comment.html', comment=comment)
 
 
-# Widok usunięcia komentarza
 @main.route('/delete_comment/<int:comment_id>', methods=['POST'])
 @login_required
 def delete_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
-    if comment.user_id != current_user.id:
+    if comment.user_id != current_user.id and not current_user.is_admin:
         flash('You are not authorized to delete this comment.')
         return redirect(url_for('main.post', post_id=comment.post_id))
+    for like in comment.likes:
+        db.session.delete(like)
     db.session.delete(comment)
     db.session.commit()
     flash('Comment deleted successfully.')
     return redirect(url_for('main.post', post_id=comment.post_id))
+
+
+@main.route('/admin')
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin:
+        flash('You are not authorized to access this page.')
+        return redirect(url_for('main.index'))
+    users = User.query.all()
+    posts = Post.query.all()
+    return render_template('admin_dashboard.html', users=users, posts=posts)
+
+
+@main.route('/admin/edit_user/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def edit_user(user_id):
+    if not current_user.is_admin:
+        flash('You are not authorized to access this page.')
+        return redirect(url_for('main.index'))
+    user = User.query.get_or_404(user_id)
+    if request.method == 'POST':
+        user.username = request.form['username']
+        user.email = request.form['email']
+        user.is_admin = 'is_admin' in request.form
+        db.session.commit()
+        flash('User updated successfully.')
+        return redirect(url_for('main.admin_dashboard'))
+    return render_template('edit_user.html', user=user)
+
+
+@main.route('/admin/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        flash('You are not authorized to delete this user.')
+        return redirect(url_for('main.index'))
+    user = User.query.get_or_404(user_id)
+
+    # Usuwanie postów i powiązanych komentarzy oraz łapek
+    for post in user.posts:
+        for comment in post.comments:
+            for like in comment.likes:
+                db.session.delete(like)
+            db.session.delete(comment)
+        for like in post.likes:
+            db.session.delete(like)
+        db.session.delete(post)
+
+    # Usuwanie komentarzy bezpośrednio powiązanych z użytkownikiem
+    for comment in user.comments:
+        for like in comment.likes:
+            db.session.delete(like)
+        db.session.delete(comment)
+
+    db.session.delete(user)
+    db.session.commit()
+    flash('User and all associated posts and comments have been deleted successfully.')
+    return redirect(url_for('main.admin_dashboard'))
+
+
+@main.route('/admin/block_user/<int:user_id>', methods=['POST'])
+@login_required
+def block_user(user_id):
+    if not current_user.is_admin:
+        flash('You are not authorized to block this user.')
+        return redirect(url_for('main.index'))
+    user = User.query.get_or_404(user_id)
+
+    # Ukrywanie postów i komentarzy użytkownika
+    db.session.query(Post).filter_by(user_id=user.id).update({"is_hidden": True})
+    db.session.query(Comment).filter_by(user_id=user.id).update({"is_hidden": True})
+
+    user.is_blocked = True  # Ustawienie atrybutu `is_blocked`
+    db.session.commit()
+    flash('User blocked and their posts/comments have been hidden.')
+    return redirect(url_for('main.admin_dashboard'))
+
+
+@main.route('/admin/unblock_user/<int:user_id>', methods=['POST'])
+@login_required
+def unblock_user(user_id):
+    if not current_user.is_admin:
+        flash('You are not authorized to unblock this user.')
+        return redirect(url_for('main.index'))
+    user = User.query.get_or_404(user_id)
+
+    # Odkrywanie postów i komentarzy użytkownika
+    db.session.query(Post).filter_by(user_id=user.id).update({"is_hidden": False})
+    db.session.query(Comment).filter_by(user_id=user.id).update({"is_hidden": False})
+
+    user.is_blocked = False  # Ustawienie atrybutu `is_blocked` na False
+    db.session.commit()
+    flash('User unblocked and their posts/comments have been unhidden.')
+    return redirect(url_for('main.admin_dashboard'))
