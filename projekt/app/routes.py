@@ -9,7 +9,8 @@ auth = Blueprint('auth', __name__)
 @main.route('/')
 def index():
     posts = Post.query.all()
-    return render_template('index.html', posts=posts)
+    user_likes = {like.post_id: like for like in Like.query.filter_by(user_id=current_user.id).all()} if current_user.is_authenticated else {}
+    return render_template('index.html', posts=posts, user_likes=user_likes)
 
 
 @main.route('/post/<int:post_id>', methods=['GET', 'POST'])
@@ -21,7 +22,8 @@ def post(post_id):
         db.session.add(comment)
         db.session.commit()
         return redirect(url_for('main.post', post_id=post.id))
-    return render_template('post.html', post=post)
+    user_likes = {like.comment_id: like for like in Like.query.filter_by(user_id=current_user.id).all()} if current_user.is_authenticated else {}
+    return render_template('post.html', post=post, user_likes=user_likes)
 
 
 @main.route('/like/<int:entity_id>/<entity_type>/<action>')
@@ -44,10 +46,8 @@ def like_action(entity_id, entity_type, action):
             db.session.delete(like)
             db.session.commit()
             if entity_type == 'post':
-                print(f"Deleted like for post_id: {entity_id}")
                 return redirect(url_for('main.index'))
             else:
-                print(f"Deleted like for comment_id: {entity_id}")
                 return redirect(url_for('main.post', post_id=entity.post_id))
     else:
         new_like = Like(
@@ -57,8 +57,6 @@ def like_action(entity_id, entity_type, action):
             upvote=(action == 'upvote')
         )
         db.session.add(new_like)
-        print(
-            f"Added new like: post_id={new_like.post_id}, comment_id={new_like.comment_id}, user_id={new_like.user_id}, upvote={new_like.upvote}")
 
     db.session.commit()
     if entity_type == 'post':
