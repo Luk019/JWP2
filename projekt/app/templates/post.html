@@ -3,36 +3,38 @@
 {% block content %}
     <h1>{{ post.title }}</h1>
     <p>{{ post.content }}</p>
+    <p><strong>Author:</strong> {{ post.author.username }}</p>
 <!--
-    <div>
+    <div class="like-container">
         {% set post_upvote = user_likes.get(post.id) and user_likes[post.id].upvote %}
         {% set post_downvote = user_likes.get(post.id) and not user_likes[post.id].upvote %}
         {% set upvotes = post.likes|selectattr('upvote')|list|length %}
         {% set downvotes = post.likes|rejectattr('upvote')|list|length %}
-        <a href="{{ url_for('main.like_action', entity_id=post.id, entity_type='post', action='upvote') }}" class="{% if post_upvote %}selected{% endif %}">👍 {{ upvotes }}</a>
-        <a href="{{ url_for('main.like_action', entity_id=post.id, entity_type='post', action='downvote') }}" class="{% if post_downvote %}selected{% endif %}">👎 {{ downvotes }}</a>
+        <a href="{{ url_for('main.like_action', entity_id=post.id, entity_type='post', action='upvote') }}" class="like-button upvote {% if post_upvote %}selected{% endif %}">👍 <span class="count">{{ upvotes }}</span></a>
+        <a href="{{ url_for('main.like_action', entity_id=post.id, entity_type='post', action='downvote') }}" class="like-button downvote {% if post_downvote %}selected{% endif %}">👎 <span class="count">{{ downvotes }}</span></a>
     </div>
 -->
     <h2>Comments</h2>
     <form action="{{ url_for('main.post', post_id=post.id) }}" method="POST" class="form-post">
-        <div class="form-group">
-            <textarea name="content" id="content" class="form-control"></textarea>
-        </div>
+        <textarea name="content" id="content" class="form-control"></textarea>
         <button type="submit">Submit</button>
     </form>
     {% for comment in post.comments %}
         {% if not comment.is_hidden %}
             <div class="comment">
                 <p>{{ comment.content }}</p>
-                <div>
+                <p><strong>Author:</strong> {{ comment.author.username }}</p>
+                <div class="like-container">
                     {% set comment_upvote = user_likes.get(comment.id) and user_likes[comment.id].upvote %}
                     {% set comment_downvote = user_likes.get(comment.id) and not user_likes[comment.id].upvote %}
                     {% set upvotes = comment.likes|selectattr('upvote')|list|length %}
                     {% set downvotes = comment.likes|rejectattr('upvote')|list|length %}
-                    <a href="{{ url_for('main.like_action', entity_id=comment.id, entity_type='comment', action='upvote') }}" class="{% if comment_upvote %}selected{% endif %}">👍 {{ upvotes }}</a>
-                    <a href="{{ url_for('main.like_action', entity_id=comment.id, entity_type='comment', action='downvote') }}" class="{% if comment_downvote %}selected{% endif %}">👎 {{ downvotes }}</a>
+                    <a href="{{ url_for('main.like_action', entity_id=comment.id, entity_type='comment', action='upvote') }}" class="like-button upvote {% if comment_upvote %}selected{% endif %}">👍 <span class="count">{{ upvotes }}</span></a>
+                    <a href="{{ url_for('main.like_action', entity_id=comment.id, entity_type='comment', action='downvote') }}" class="like-button downvote {% if comment_downvote %}selected{% endif %}">👎 <span class="count">{{ downvotes }}</span></a>
                     {% if current_user.is_authenticated and (current_user.id == comment.user_id or current_user.is_admin) %}
-                        <a href="{{ url_for('main.edit_comment', comment_id=comment.id) }}">Edit</a>
+                         <form action="{{ url_for('main.edit_comment', comment_id=comment.id) }}" method="GET" style="display:inline;">
+                            <button type="submit">Edit</button>
+                         </form>
                         <form action="{{ url_for('main.delete_comment', comment_id=comment.id) }}" method="POST" style="display:inline;">
                             <button type="submit">Delete</button>
                         </form>
