@@ -30,3 +30,7 @@ form textarea {
     height: 100px;
     margin: 1em 0;
 }
+
+.selected {
+    color: gray;
+}
