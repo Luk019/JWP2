@@ -50,14 +50,31 @@ form {
     margin-top: 1em;
 }
 
-form input[type="text"], form textarea {
+.form-inline .form-group {
+    display: block;
+    margin-bottom: 1em;
+}
+
+.form-inline .form-group label {
+    display: block;
+    margin-bottom: 0.5em;
+}
+
+.form-register .form-control,
+.form-login .form-control {
+    width: 200px;
+    padding: 0.5em;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-post .form-control {
     width: 100%;
     margin: 1em 0;
     padding: 1em;
     border: 1px solid #ddd;
     border-radius: 4px;
     box-sizing: border-box;
-    resize: none; /* Disable textarea resizing */
 }
 
 button {
@@ -120,5 +137,5 @@ img {
 }
 
 .selected {
-    color:red;
+    color: red;
 }

@@ -3,6 +3,7 @@
 {% block content %}
     <h1>{{ post.title }}</h1>
     <p>{{ post.content }}</p>
+<!--
     <div>
         {% set post_upvote = user_likes.get(post.id) and user_likes[post.id].upvote %}
         {% set post_downvote = user_likes.get(post.id) and not user_likes[post.id].upvote %}
@@ -11,10 +12,12 @@
         <a href="{{ url_for('main.like_action', entity_id=post.id, entity_type='post', action='upvote') }}" class="{% if post_upvote %}selected{% endif %}">👍 {{ upvotes }}</a>
         <a href="{{ url_for('main.like_action', entity_id=post.id, entity_type='post', action='downvote') }}" class="{% if post_downvote %}selected{% endif %}">👎 {{ downvotes }}</a>
     </div>
-
+-->
     <h2>Comments</h2>
-    <form action="{{ url_for('main.post', post_id=post.id) }}" method="POST">
-        <textarea name="content"></textarea>
+    <form action="{{ url_for('main.post', post_id=post.id) }}" method="POST" class="form-post">
+        <div class="form-group">
+            <textarea name="content" id="content" class="form-control"></textarea>
+        </div>
         <button type="submit">Submit</button>
     </form>
     {% for comment in post.comments %}
